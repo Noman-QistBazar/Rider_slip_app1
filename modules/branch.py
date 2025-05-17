@@ -4,7 +4,14 @@ from modules.utils import hash_image
 import datetime
 
 def render_branch_panel(code):
-          st.header(f"Branch Panel - {code.upper()}")
+    # Fetch branch data
+    branch_data = supabase.table("branches").select("*").eq("code", code.upper()).single().execute().data
+    
+    # Get branch name or fallback
+    branch_name = branch_data.get("name") if branch_data else "Unknown Branch"
+    
+    # Show branch name in header
+    st.header(f"Branch Panel - {branch_name}")
 
     weeks = [f"Week {i}" for i in range(1, 13)]
     week = st.selectbox("Select Week", weeks)
@@ -12,17 +19,16 @@ def render_branch_panel(code):
     qty = st.number_input("Slip Quantity", min_value=1, step=1)
     img = st.file_uploader("Upload Slip Image", type=["jpg", "jpeg", "png"])
 
-    branch_data = supabase.table("branches").select("*").eq("code", code.upper()).single().execute().data
     riders = branch_data["riders"] if branch_data and "riders" in branch_data else []
     rider = st.selectbox("Rider Name", riders)
 
     ids = []
     if slip_type == "Online Slip":
         for i in range(qty):
-            ids.append(st.text_input(f"Transaction ID #{i+1}"))
+            ids.append(st.text_input(f"Transaction ID #{i+1}", key=f"tid_{i}"))
     else:
         for i in range(qty):
-            ids.append(st.text_input(f"Serial Number #{i+1}"))
+            ids.append(st.text_input(f"Serial Number #{i+1}", key=f"sid_{i}"))
 
     commission = qty * (50 if slip_type == "Online Slip" else 25)
     st.info(f"Total Commission: Rs. {commission}")
