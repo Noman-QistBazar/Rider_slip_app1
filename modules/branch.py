@@ -11,22 +11,19 @@ def get_weeks_of_month(year, month):
     month_days = list(cal.itermonthdates(year, month))
 
     week_start = None
-    week_end = None
     current_week = []
 
     for day in month_days:
         if day.month != month:
-            continue
+            continue  # skip days outside the month
 
         if week_start is None:
             week_start = day
 
         current_week.append(day)
 
-        # If Sunday or last day of month, close the week
-        if day.weekday() == 6 or day == max(
-            [d for d in month_days if d.month == month]
-        ):
+        # If it's Sunday (6) or last day in the month, close the week
+        if day.weekday() == 6 or day == max([d for d in month_days if d.month == month]):
             week_end = day
             weeks.append((week_start, week_end))
             week_start = None
@@ -46,21 +43,27 @@ def render_branch_panel(code):
         .data
     )
 
+    # Get branch name or fallback
     branch_name = branch_data.get("name") if branch_data else "Unknown Branch"
 
+    # Show branch name in header
     st.header(f"Branch Panel - {branch_name}")
 
     today = datetime.date.today()
     weeks = get_weeks_of_month(today.year, today.month)
 
+    # Format weeks as "01 May 2025 - 07 May 2025"
     week_options = [
         f"{w[0].strftime('%d %b %Y')} - {w[1].strftime('%d %b %Y')}" for w in weeks
     ]
-    week = st.selectbox("Select Week", week_options)
+
+    if "selected_week" not in st.session_state:
+        st.session_state.selected_week = week_options[0]  # default to first week
+
+    week = st.selectbox("Select Week", week_options, key="selected_week")
 
     slip_type = st.radio("Slip Type", ["Cash Slip", "Online Slip"])
     qty = st.number_input("Slip Quantity", min_value=1, step=1)
-    img = st.file_uploader("Upload Slip Image", type=["jpg", "jpeg", "png"])
 
     riders = branch_data["riders"] if branch_data and "riders" in branch_data else []
     rider = st.selectbox("Rider Name", riders)
@@ -75,6 +78,8 @@ def render_branch_panel(code):
 
     commission = qty * (50 if slip_type == "Online Slip" else 25)
     st.info(f"Total Commission: Rs. {commission}")
+
+    img = st.file_uploader("Upload Slip Image", type=["jpg", "jpeg", "png"])
 
     if st.button("Submit Slip"):
         if img is None:
