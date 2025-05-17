@@ -2,19 +2,62 @@ import streamlit as st
 from supabase_client import supabase
 from modules.utils import hash_image
 import datetime
+import calendar
+
+
+def get_weeks_of_month(year, month):
+    weeks = []
+    cal = calendar.Calendar(firstweekday=calendar.MONDAY)
+    month_days = list(cal.itermonthdates(year, month))
+
+    week_start = None
+    week_end = None
+    current_week = []
+
+    for day in month_days:
+        if day.month != month:
+            continue
+
+        if week_start is None:
+            week_start = day
+
+        current_week.append(day)
+
+        # If Sunday or last day of month, close the week
+        if day.weekday() == 6 or day == max(
+            [d for d in month_days if d.month == month]
+        ):
+            week_end = day
+            weeks.append((week_start, week_end))
+            week_start = None
+            current_week = []
+
+    return weeks
+
 
 def render_branch_panel(code):
     # Fetch branch data
-    branch_data = supabase.table("branches").select("*").eq("code", code.upper()).single().execute().data
-    
-    # Get branch name or fallback
+    branch_data = (
+        supabase.table("branches")
+        .select("*")
+        .eq("code", code.upper())
+        .single()
+        .execute()
+        .data
+    )
+
     branch_name = branch_data.get("name") if branch_data else "Unknown Branch"
-    
-    # Show branch name in header
+
     st.header(f"Branch Panel - {branch_name}")
 
-    weeks = [f"Week {i}" for i in range(1, 13)]
-    week = st.selectbox("Select Week", weeks)
+    today = datetime.date.today()
+    weeks = get_weeks_of_month(today.year, today.month)
+
+    week_options = [
+        f"{w[0].strftime('%d %b %Y')} - {w[1].strftime('%d %b %Y')}" for w in weeks
+    ]
+    week = st.selectbox("Select Week", week_options)
+
     slip_type = st.radio("Slip Type", ["Cash Slip", "Online Slip"])
     qty = st.number_input("Slip Quantity", min_value=1, step=1)
     img = st.file_uploader("Upload Slip Image", type=["jpg", "jpeg", "png"])
@@ -38,7 +81,13 @@ def render_branch_panel(code):
             st.error("Please upload an image.")
             return
         img_hash = hash_image(img)
-        existing = supabase.table("slips").select("img_hash").eq("img_hash", img_hash).execute().data
+        existing = (
+            supabase.table("slips")
+            .select("img_hash")
+            .eq("img_hash", img_hash)
+            .execute()
+            .data
+        )
         if existing:
             st.error("This image has already been uploaded.")
             return
@@ -52,7 +101,7 @@ def render_branch_panel(code):
             "ids": ids,
             "img_hash": img_hash,
             "commission": commission,
-            "timestamp": str(datetime.datetime.now())
+            "timestamp": str(datetime.datetime.now()),
         }
         supabase.table("slips").insert(slip_data).execute()
         st.success("Slip submitted successfully!")
