@@ -4,7 +4,7 @@ from modules.utils import hash_image
 import datetime
 
 def render_branch_panel(code):
-     st.header(f"Branch Panel - {code.upper()}")
+          st.header(f"Branch Panel - {code.upper()}")
 
     weeks = [f"Week {i}" for i in range(1, 13)]
     week = st.selectbox("Select Week", weeks)
