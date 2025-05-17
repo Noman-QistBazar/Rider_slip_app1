@@ -141,8 +141,8 @@ def render_admin_panel():
                                 st.success(f"Removed rider: {rider}")
                                 st.rerun()
                 else:
-                    st.info(f"No riders assigned yet for branch '{branch.get('name', branch['code'])}'.")
-
+                  st.info("No riders assigned yet.")
+                    
                 new_rider = st.text_input("Add New Rider").strip()
                 if st.button("Add Rider"):
                     if new_rider:
