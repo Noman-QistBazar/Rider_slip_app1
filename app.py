@@ -1,8 +1,16 @@
 import streamlit as st
 from modules import utils, admin, branch
 from supabase_client import supabase
+from PIL import Image
 
 st.set_page_config(page_title="Delivery Slip Portal", layout="centered")
+
+# Logo
+logo = Image.open("data/QB-logo.png")
+with st.container():
+    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+    st.image(logo, use_container_width=False, width=250)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.title("🚚 Delivery Slip Submission Portal")
 
