@@ -17,7 +17,7 @@ st.title("🚚 Delivery Slip Submission Portal")
 branch_code = st.text_input("Enter Branch Code")
 
 if branch_code:
-    if branch_code.upper() == "ADMIN2024":
+    if branch_code.upper() == "1541653":
         admin.render_admin_panel()
     elif utils.validate_branch_code(branch_code):
         branch.render_branch_panel(branch_code)
